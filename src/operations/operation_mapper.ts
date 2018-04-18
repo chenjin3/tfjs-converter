@@ -14,11 +14,11 @@
  * limitations under the License.
  * =============================================================================
  */
-import {DataType} from '@tensorflow/tfjs-core/dist/types';
+import { DataType } from '@tensorflow/tfjs-core/dist/types';
 
-import {tensorflow} from '../data/index';
+import { tensorflow } from '../data/index';
 
-import {ParamValue} from './index';
+import { ParamValue } from './index';
 import * as arithmetic from './op_list/arithmetic.json';
 import * as basicMath from './op_list/basic_math.json';
 import * as convolution from './op_list/convolution.json';
@@ -30,13 +30,14 @@ import * as normalization from './op_list/normalization.json';
 import * as reduction from './op_list/reduction.json';
 import * as sliceJoin from './op_list/slice_join.json';
 import * as transformation from './op_list/transformation.json';
-import {Graph, Node, OpMapper} from './types';
+import * as image from './op_list/image.json';
+import { Graph, Node, OpMapper } from './types';
 
 const CONTROL_FLOW_OPS = ['Switch', 'Merge', 'Enter', 'Exit', 'Next'];
 export class OperationMapper {
   private static _instance: OperationMapper;
 
-  private opMappers: {[key: string]: OpMapper};
+  private opMappers: { [key: string]: OpMapper };
 
   // Singleton instance for the mapper
   public static get Instance() {
@@ -51,14 +52,14 @@ export class OperationMapper {
       ...(logical as {}) as OpMapper[], ...(graph as {}) as OpMapper[],
       ...(matrices as {}) as OpMapper[], ...(normalization as {}) as OpMapper[],
       ...(reduction as {}) as OpMapper[], ...(sliceJoin as {}) as OpMapper[],
-      ...(transformation as {}) as OpMapper[]
+      ...(transformation as {}) as OpMapper[], ...(image as {}) as OpMapper[]
     ];
-    this.opMappers = mappersJson.reduce<{[key: string]: OpMapper}>(
-        (map, mapper: OpMapper) => {
-          map[mapper.tfOpName] = mapper;
-          return map;
-        },
-        {});
+    this.opMappers = mappersJson.reduce<{ [key: string]: OpMapper }>(
+      (map, mapper: OpMapper) => {
+        map[mapper.tfOpName] = mapper;
+        return map;
+      },
+      {});
   }
 
   private isControlFlow(node: tensorflow.INodeDef) {
@@ -71,7 +72,7 @@ export class OperationMapper {
     const tfNodes = graph.node;
     let withControlFlow = false;
     const placeholders: Node[] = [];
-    const nodes = tfNodes.reduce<{[key: string]: Node}>((map, node) => {
+    const nodes = tfNodes.reduce<{ [key: string]: Node }>((map, node) => {
       map[node.name] = this.mapNode(node);
       if (this.isControlFlow(node)) withControlFlow = true;
       if (node.op === 'Placeholder') placeholders.push(map[node.name]);
@@ -93,7 +94,7 @@ export class OperationMapper {
       const node = nodes[key];
       if (node.children.length === 0) outputs.push(node);
     });
-    return {nodes, inputs, outputs, placeholders, withControlFlow};
+    return { nodes, inputs, outputs, placeholders, withControlFlow };
   }
 
   private mapNode(node: tensorflow.INodeDef): Node {
@@ -112,8 +113,10 @@ export class OperationMapper {
     };
 
     if (!!mapper.params) {
-      newNode.params = mapper.params.reduce<{[key: string]:
-                                                 ParamValue}>((map, param) => {
+      newNode.params = mapper.params.reduce<{
+        [key: string]:
+        ParamValue
+      }>((map, param) => {
         const inputIndex = param.tfInputIndex;
         const inputParamLength = param.tfInputParamLength;
         const type = param.type;
@@ -122,37 +125,37 @@ export class OperationMapper {
           switch (param.type) {
             case 'string':
               value = this.getStringParam(
-                  node.attr, param.tfParamName, param.defaultValue as string);
+                node.attr, param.tfParamName, param.defaultValue as string);
               break;
             case 'number':
               value = this.getNumberParam(
-                  node.attr, param.tfParamName, param.defaultValue as number);
+                node.attr, param.tfParamName, param.defaultValue as number);
               break;
             case 'number[]':
               value = this.getNumericArrayParam(
-                  node.attr, param.tfParamName, param.defaultValue as number[]);
+                node.attr, param.tfParamName, param.defaultValue as number[]);
               break;
             case 'bool':
               value = this.getBoolParam(
-                  node.attr, param.tfParamName, param.defaultValue as boolean);
+                node.attr, param.tfParamName, param.defaultValue as boolean);
               break;
             case 'shape':
               value = this.getTensorShapeParam(
-                  node.attr, param.tfParamName, param.defaultValue as number[]);
+                node.attr, param.tfParamName, param.defaultValue as number[]);
               break;
             case 'dtype':
               value = this.getDtypeParam(
-                  node.attr, param.tfParamName, param.defaultValue as DataType);
+                node.attr, param.tfParamName, param.defaultValue as DataType);
               break;
             case 'tensor':
             case 'tensors':
               break;
             default:
               throw new Error(
-                  `Unsupported param type: ${param.type} for op: ${node.op}`);
+                `Unsupported param type: ${param.type} for op: ${node.op}`);
           }
         }
-        map[param.dlParamName] = {value, inputIndex, type, inputParamLength};
+        map[param.dlParamName] = { value, inputIndex, type, inputParamLength };
         return map;
       }, {});
     }
@@ -160,8 +163,8 @@ export class OperationMapper {
   }
 
   private getStringParam(
-      attrs: {[key: string]: tensorflow.IAttrValue}, name: string, def: string,
-      keepCase = false): string {
+    attrs: { [key: string]: tensorflow.IAttrValue }, name: string, def: string,
+    keepCase = false): string {
     const param = attrs[name];
     if (param !== undefined) {
       const value = String.fromCharCode.apply(null, param.s);
@@ -171,22 +174,22 @@ export class OperationMapper {
   }
 
   private getBoolParam(
-      attrs: {[key: string]: tensorflow.IAttrValue}, name: string,
-      def: boolean): boolean {
+    attrs: { [key: string]: tensorflow.IAttrValue }, name: string,
+    def: boolean): boolean {
     const param = attrs[name];
     return param ? param.b : def;
   }
 
   private getNumberParam(
-      attrs: {[key: string]: tensorflow.IAttrValue}, name: string,
-      def: number): number {
+    attrs: { [key: string]: tensorflow.IAttrValue }, name: string,
+    def: number): number {
     const param = attrs[name];
     return (param ? ((param.f !== undefined) ? param.f : param.i) : def) as
-        number;
+      number;
   }
   private getDtypeParam(
-      attrs: {[key: string]: tensorflow.IAttrValue}, name: string,
-      def: DataType): DataType {
+    attrs: { [key: string]: tensorflow.IAttrValue }, name: string,
+    def: DataType): DataType {
     const param = attrs[name];
     if (param && param.type) {
       switch (param.type) {
@@ -203,8 +206,8 @@ export class OperationMapper {
     return def;
   }
   private getTensorShapeParam(
-      attrs: {[key: string]: tensorflow.IAttrValue}, name: string,
-      def?: number[]): number[]|undefined {
+    attrs: { [key: string]: tensorflow.IAttrValue }, name: string,
+    def?: number[]): number[] | undefined {
     const param = attrs[name];
     if (param && param.shape) {
       return param.shape.dim.map(dim => dim.size as number);
@@ -213,8 +216,8 @@ export class OperationMapper {
   }
 
   private getNumericArrayParam(
-      attrs: {[key: string]: tensorflow.IAttrValue}, name: string,
-      def: number[]): number[] {
+    attrs: { [key: string]: tensorflow.IAttrValue }, name: string,
+    def: number[]): number[] {
     const param = attrs[name];
     if (param) {
       return (param.list.f.length ? param.list.f : param.list.i) as number[];

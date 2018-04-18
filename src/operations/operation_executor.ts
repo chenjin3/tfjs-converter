@@ -17,7 +17,7 @@
 
 import * as tfc from '@tensorflow/tfjs-core';
 
-import {NamedTensorsMap} from '../data/index';
+import { NamedTensorsMap } from '../data/index';
 
 import * as arithmetic from './executors/arithmetic_executor';
 import * as basicMath from './executors/basic_math_executor';
@@ -31,7 +31,7 @@ import * as normalization from './executors/normalization_executor';
 import * as reduction from './executors/reduction_executor';
 import * as sliceJoin from './executors/slice_join_executor';
 import * as transformation from './executors/transformation_executor';
-import {Node} from './index';
+import { Node } from './index';
 
 /**
  * Executes the op defined by the node object.
@@ -39,7 +39,7 @@ import {Node} from './index';
  * @param tensorMap contains tensors for executed nodes and weights
  */
 export function executeOp(
-    node: Node, tensorMap: NamedTensorsMap): tfc.Tensor[] {
+  node: Node, tensorMap: NamedTensorsMap): tfc.Tensor[] {
   switch (node.category) {
     case 'arithmetic':
       return arithmetic.executeOp(node, tensorMap);

@@ -17,27 +17,27 @@
 
 import * as tfc from '@tensorflow/tfjs-core';
 
-import {NamedTensorsMap} from '../../data/index';
-import {Node} from '../index';
+import { NamedTensorsMap } from '../../data/index';
+import { Node } from '../index';
 
-import {OpExecutor} from './types';
-import {getParamValue} from './utils';
+import { OpExecutor } from './types';
+import { getParamValue } from './utils';
 
 export let executeOp: OpExecutor =
-    (node: Node, tensorMap: NamedTensorsMap): tfc.Tensor[] => {
-      switch (node.op) {
-        case 'resizeBilinear': {
-          const images = getParamValue('images', node, tensorMap) as tfc.Tensor;
-          const size = getParamValue('size', node, tensorMap) as number[];
-          const alignCorners =
-              getParamValue('alignCorners', node, tensorMap) as boolean;
-          return [tfc.image.resizeBilinear(
-              images as tfc.Tensor3D | tfc.Tensor4D, [size[0], size[1]],
-              alignCorners)];
-        }
-        default:
-          throw TypeError(`Node type ${node.op} is not implemented`);
+  (node: Node, tensorMap: NamedTensorsMap): tfc.Tensor[] => {
+    switch (node.op) {
+      case 'resizeBilinear': {
+        const images = getParamValue('image', node, tensorMap) as tfc.Tensor;
+        const size = getParamValue('size', node, tensorMap) as number[];
+        const alignCorners =
+          getParamValue('alignCorners', node, tensorMap) as boolean;
+        return [tfc.image.resizeBilinear(
+          images as tfc.Tensor3D | tfc.Tensor4D, [size[0], size[1]],
+          alignCorners)];
       }
-    };
+      default:
+        throw TypeError(`Node type ${node.op} is not implemented`);
+    }
+  };
 
 export const CATEGORY = 'image';
