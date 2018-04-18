@@ -107,7 +107,7 @@ export let executeOp: OpExecutor = (node: Node, tensorMap: NamedTensorsMap):
       const size = getParamValue('size', node, tensorMap) as number[];
 
       return [tfc.image.resizeBilinear(
-        getParamValue('image', node, tensorMap) as tfc.Tensor3D | tfc.Tensor4D,
+        getParamValue('images', node, tensorMap) as tfc.Tensor3D | tfc.Tensor4D,
         [size[0], size[1]],
         alignCorners)];
     }
